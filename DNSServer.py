@@ -17,7 +17,7 @@ file_address = "/etc/myhosts"       # myhosts is a file which has a list like:
                                     # server_ipaddr2    server_name2
 
 
-print("UDP server up and listening")
+print("DNS server up and listening")
 
 class DNSServer():
 
@@ -43,7 +43,7 @@ class DNSServer():
         print(clientMsg)
         print(clientIP)
 
-        # parsing the dns query
+        # stage 1: parsing the dns query
         transaction_id = message[0:2]
         questions = message[4:6]
         authority_RRs = message[8:10]
@@ -101,12 +101,13 @@ class DNSServer():
                 chosen_str = line
                 break
 
-        if flag == 0:
+        if flag == 0:  # the answer doesn't exist in our file
             time.sleep(random.uniform(0, 0.1))
             flags_ans = 0x81a3.to_bytes(2, 'big')
+            # sample of authorative nameservers address
             authoritative_nameservers_ans = 0x00000600010001517a004001610c726f6f742d73657276657273036e657400056e73746c640c766572697369676e2d67727303636f6d00789639bd000007080000038400093a8000015180.to_bytes(
                 75, 'big')
-
+            
             not_found_answer = transaction_id_ans + flags_ans + questions_ans + answer_RRs_ans + authority_RRs_ans + additional_RRs_ans + queries_ans + authoritative_nameservers_ans + additional_records_ans
             self.sock.sendto(not_found_answer, address)
             return
@@ -118,6 +119,7 @@ class DNSServer():
         ip2 = int(ip_arr[2]).to_bytes(1, 'big')
         ip3 = int(ip_arr[3]).to_bytes(1, 'big')
 
+        # making the final response
         final_answer = transaction_id_ans + flags_ans + questions_ans + answer_RRs_ans + authority_RRs_ans + additional_RRs_ans + queries_ans + name_ans + type_a_ans + class_in_ans + ttl_ans + data_length_ans + ip0 + ip1 + ip2 + ip3 + additional_records_ans
 
         self.sock.sendto(final_answer, address)
